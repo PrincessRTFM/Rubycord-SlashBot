@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 
 # PUBLIC GLOBALS
-# These can be used in handlers in the appropriate locations
+# These can be used in handlers in the appropriate locations. The values are taken from discord's API documentation.
 
-# @content["ty[e"]
+# @content["type"]
 $CTYPE_MESSAGE = 4 # normal message
 $CTYPE_UPDATE = 7 # edit an existing message (from this app)
 $CTYPE_MODAL = 9 # create a modal for the user
@@ -11,8 +11,10 @@ $CTYPE_MODAL = 9 # create a modal for the user
 # @content["data"]["flags"]
 $MFLAG_NOEMBED = 1 << 2 # message flag: suppress embeds
 $MFLAG_EPHEMERAL = 1 << 6 # message flag: ephemeral
+
 # END PUBLIC GLOBALS
 
+require 'ed25519'
 require 'json'
 require 'configurate'
 require 'configurate/provider/toml'
@@ -348,8 +350,7 @@ Example: `int?=1,1000#count:The number of dice to roll` will allow specifying an
 
 	desc "launch", "launch the bot"
 	def launch
-		require 'ed25519'
-		require 'sinatra'
+		require 'sinatra' # If loaded at startup, interferes with Thor's ARGV processing
 		disable :static, :logging, :method_override, :run
 		verifyKey = begin
 			Ed25519::VerifyKey.new [$Config.discord.pubkey.get.to_s].pack 'H*'
