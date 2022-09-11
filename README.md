@@ -160,13 +160,20 @@ For `channel` options:
 ##### Examples
 
 ```
-register "roll" "Roll some dice" "int@4,6,8,10,12,20,100#sides:How many sides per die?" "int?=1,1000#count:How many dice to roll? (default 1)"
+$ register \
+	"roll" \
+	"Roll some dice" \
+	"int@4,6,8,10,12,20,100#sides:How many sides per die?" \
+	"int?=1,1000#count:How many dice to roll? (default 1)"
 ```
 
 While implementation of this slash command is left as an exercise to the reader, this would register a command `/roll`, taking one required option as an integer that can only be given the values `4`, `6`, `8`, `10`, `12`, `20`, or `100`, described as the number os sides per die being rolled, and one optional option as an integer within the range `[1, 1000]` (bi-inclusive) described as the number of dice to roll. Please note that optional options that aren't provided when the command is used aren't sent; default values are the responsibility of the command handler itself. A default is indicated in the command option, but this is neither required nor actually used.
 
 ```
-register "echo" "Take whatever message you write and echo it right back" "string#message:The message to echo back to you"
+$ register \
+	"echo" \
+	"Take whatever message you write and echo it right back" \
+	"string#message:The message to echo back to you"
 ```
 
 Again leaving implementation to the reader, this would register `/echo`, taking one (required!) string option called `message`, described as the message to echo back to you, with no limits on length.
