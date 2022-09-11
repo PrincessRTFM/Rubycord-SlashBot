@@ -99,19 +99,6 @@ class SlashBot < Thor
 	class_option :verbose, :desc => "Log debugging information", :type => :boolean, :aliases => ["v"]
 
 	desc "register COMMAND DESCRIPTION [OPTIONS...]", "register a simple slash command"
-	long_desc <<-LONGDESC
-Register a slash command with your discord application, optionally providing arguments for it.
-
-Options to your command are single strings in the form "<type>[?][@<choices>|=<min>,<max>]#<name>:<description>". The type can be one of string, int/integer, float/number, bool/boolean, user, channel, role, or mentionable. If it is suffixed with `?` then it will be optional, otherwise it will be mandatory. Mandatory option descriptors MUST come before optional ones. For string, integer, and float types, you can provide a comma-delimited list of allowed values separated from the type with an `@`, OR you can provide a min and max separated from the type with an `=`, which will be min/max values for ints and floats and min/max length for strings.
-
-If the type is a channel, then the choices will determine which channel types are shown, and may consist of text, voice, category, news/announcement, news-thread/announcement-thread, public-thread, and private-thread.
-
-Example: `string#message:The message to echo back to you` will present a single string option named "Message" with the description "The message to echo back to you", allowing the user to type anything they want.
-
-Example: `int@4,6,8,10,12,20#sides:The number of sides on the die to roll` will present a single integer option named "Sides" with the description "The number of sides on the die to roll", allowing ONLY the values 4, 6, 8, 10, 12, or 20.
-
-Example: `int?=1,1000#count:The number of dice to roll` will allow specifying any number of dice from 1 (inclusive) to 1000 (inclusive) to roll, as an optional parameter.
-	LONGDESC
 	option :guild, :desc => "Register the command for the specified discord server, instead of globally", :aliases => ["g"]
 	option :direct, :desc => "Allow the command to be used in DMs if you have an application bot (global only)", :aliases => ["d"], :type => :boolean
 	option :admin, :desc => "Restrict the command to admins by default", :type => :boolean
