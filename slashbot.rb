@@ -359,11 +359,12 @@ Example: `int?=1,1000#count:The number of dice to roll` will allow specifying an
 		end
 		set :port, $Config.http.port.get
 		before do
-			puts "PATH=#{request.path}, FILE=#{request.script_name}, INFO=#{request.path_info}\n"
+			puts "PATH=#{request.path}, FILE=#{request.script_name}, INFO=#{request.path_info}\n" if options[:verbose]
 			sig = request.env["HTTP_X_SIGNATURE_ED25519"]
 			time = request.env["HTTP_X_SIGNATURE_TIMESTAMP"]
 			if sig.nil? || time.nil? then
 				# Not a discord request
+				puts "Not a discord webhook request - ignoring\n" if options[:verbose]
 				halt 501, 'unknown request'
 			end
 			request.body.rewind
@@ -378,26 +379,38 @@ Example: `int?=1,1000#count:The number of dice to roll` will allow specifying an
 			if content.start_with? '{' then # try it as JSON
 				begin
 					@data = JSON.parse content
-					if @data["type"] == 1 then # PING
-						@content = {type: 1}
-						halt 200
-					elsif @data["type"] == 2 then # command used!
-						request.path_info = "/" + @data['data']['name']
-						@content = nil
-						pass
-					elsif @data["type"] == 3 then # component interaction - things like buttons, for instance
-						request.path_info = "/component/" + @data['data']['custom_id']
-						@content = nil
-						pass
-					else
+					if @data["type"].nil? then
+						puts "Received invalid request (no `type` property)\n" if options[:verbose]
 						body 'unknown request type'
 						halt 422 # unprocessable entity
+					else
+						case @data["type"]
+						when 1 # PING
+							puts "Received ping event\n" if options[:verbose]
+							@content = {type: 1}
+							halt 200
+						when 2 # command used!
+							puts "Received command event\n" if options[:verbose]
+							request.path_info = "/" + @data['data']['name']
+							@content = nil
+							pass
+						when 3 # component interaction - things like buttons, for instance
+							puts "Received component-interaction event\n" if options[:verbose]
+							request.path_info = "/component/" + @data['data']['custom_id']
+							@content = nil
+							pass
+						else
+							puts "Received unknown request (type #{@data["type"]})\n" if options[:verbose]
+							body 'unknown request type'
+							halt 422 # unprocessable entity
+						end
 					end
 				rescue JSON::ParserError
 					body 'invalid json'
 					halt 400 # bad request
 				end
 			else
+				puts "Invalid request body - ignoring\n" if options[:verbose]
 				body 'unknown content type'
 				halt 415 # unsupported media type
 			end
@@ -406,19 +419,24 @@ Example: `int?=1,1000#count:The number of dice to roll` will allow specifying an
 			if response.status == 200 then
 				if @content.nil? then
 					if body.empty? then
+						puts "Request succeeded with empty body\n" if options[:verbose]
 						headers "Content-Type" => "text/plain"
 						body 'this space intentionally left blank'
 					else
+						STDERR.puts "Request handler wrote response body directly - consider using @content instead\n" if options[:verbose]
 						body body.join + "\n" unless body.last.end_with? "\n"
 					end
 				else
+					puts "Request succeeded, serialising response content\n" if options[:verbose]
 					headers "Content-Type" => "application/json"
 					body JSON.generate @content
 				end
 			elsif response.status >= 400 && response.status < 500 then
+				puts "Request failed (client error)\n" if options[:verbose] && response.status != 401
 				headers "Content-Type" => "text/plain"
 			end
 		end
+		puts "Initialising SlashBot\n" if options[:verbose]
 		begin
 			Dir.mkdir "handlers"
 		rescue Errno::EEXIST
@@ -428,6 +446,7 @@ Example: `int?=1,1000#count:The number of dice to roll` will allow specifying an
 			exit $EX_INTERNAL_ERROR
 		end
 		begin
+			puts "Loading handlers\n" if options[:verbose]
 			Dir.glob "handlers/*.rb" do |file|
 				puts "Loading handler file #{File.basename file}\n"
 				load file
